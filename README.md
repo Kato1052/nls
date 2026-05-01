@@ -2,7 +2,7 @@
 
 ls without month abbreviation. This project was created as part of a class assignment.
 
-[![License](https://shields.io/badge/License-MIT-blue)](https://github.com/Kato1052/nls/blob/main/LICENSE) [![build](https://github.com/Kato1052/nls/actions/workflows/build.yaml/badge.svg)](https://github.com/Kato1052/nls/actions/workflows/build.yaml)
+[![License](https://shields.io/badge/License-MIT-blue)](https://github.com/Kato1052/nls/blob/main/LICENSE) [![build](https://github.com/Kato1052/nls/actions/workflows/build.yaml/badge.svg)](https://github.com/Kato1052/nls/actions/workflows/build.yaml) [![Coverage Status](https://coveralls.io/repos/github/Kato1052/nls/badge.svg?branch=main)](https://coveralls.io/github/Kato1052/nls?branch=main)
 ## Overview
 `ls -l` 実行時に表示される英語の月の略称を、数字に変更したコマンド。
 - `ls -l` の実行結果にはファイルの変更日時が表示されるが、月の表記が英語であるため分かりにくい。
