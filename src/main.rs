@@ -1,3 +1,126 @@
+use std::env;
+use std::fs::{self, DirEntry};
+use std::io;
+use std::path::Path;
+use std::os::unix::fs::MetadataExt;
+use std::os::unix::fs::PermissionsExt;
+
+use chrono::Local;
+use users::{get_group_by_gid, get_user_by_uid};
+
+fn is_hidden(entry_name: &str) -> bool {
+    entry_name.starts_with('.')
+}
+
+fn file_mode_string(mode: u32, is_dir: bool, is_symlink: bool) -> String {
+    let ftype = if is_symlink {
+        'l'
+    } else if is_dir {
+        'd'
+    } else {
+        '-'
+    };
+    let mut s = String::with_capacity(10);
+    s.push(ftype);
+    let flags = [0o400, 0o200, 0o100, 0o040, 0o020, 0o010, 0o004, 0o002, 0o001];
+    let chars = ['r', 'w', 'x'];
+    for (i, &bit) in flags.iter().enumerate() {
+        if mode & bit != 0 {
+            s.push(chars[i % 3]);
+        } else {
+            s.push('-');
+        }
+    }
+    s
+}
+
+fn long_info(path: &Path, name: &str) -> String {
+    match fs::symlink_metadata(path) {
+        Ok(meta) => {
+            let mode = meta.mode();
+            let is_dir = meta.file_type().is_dir();
+            let is_symlink = meta.file_type().is_symlink();
+            let mode_str = file_mode_string(mode, is_dir, is_symlink);
+            let nlink = meta.nlink();
+            let uid = meta.uid();
+            let gid = meta.gid();
+            let owner = get_user_by_uid(uid).map(|u| u.name().to_string_lossy().into_owned()).unwrap_or_else(|| uid.to_string());
+            let group = get_group_by_gid(gid).map(|g| g.name().to_string_lossy().into_owned()).unwrap_or_else(|| gid.to_string());
+            let size = meta.size();
+            let mtime = meta.mtime();
+            let dt = Local.timestamp_opt(mtime as i64, 0).unwrap();
+            let now = Local::now();
+            let time_str = if dt.year() < now.year() {
+                format!("{} {} ({})", dt.month(), dt.day(), dt.year())
+            } else {
+                format!("{} {} {:02}:{:02}", dt.month(), dt.day(), dt.hour(), dt.minute())
+            };
+            format!("{} {:>2} {} {} {:>6} {} {}", mode_str, nlink, owner, group, size, time_str, name)
+        }
+        Err(e) => format!("nls: cannot access '{}': {}", name, e),
+    }
+}
+
+fn list_names(path: &Path) -> io::Result<Vec<String>> {
+    let mut names = Vec::new();
+    for entry in fs::read_dir(path)? {
+        let entry = entry?;
+        if let Some(name) = entry.file_name().to_str() {
+            if !is_hidden(name) {
+                names.push(name.to_string());
+            }
+        }
+    }
+    names.sort();
+    Ok(names)
+}
+
+fn print_listing(path_str: &str, long: bool) {
+    let path = Path::new(path_str);
+    if path.is_dir() {
+        match list_names(path) {
+            Ok(names) => {
+                for name in names {
+                    let full = path.join(&name);
+                    if long {
+                        println!("{}", long_info(&full, &name));
+                    } else {
+                        println!("{}", name);
+                    }
+                }
+            }
+            Err(e) => eprintln!("nls: cannot access '{}': {}", path_str, e),
+        }
+    } else {
+        // file or doesn't exist
+        let base = Path::new(path_str).file_name().and_then(|s| s.to_str()).unwrap_or(path_str);
+        if long {
+            println!("{}", long_info(path, base));
+        } else {
+            println!("{}", base);
+        }
+    }
+}
+
+fn parse_args() -> (bool, Vec<String>) {
+    let mut long = false;
+    let mut paths = Vec::new();
+    for arg in env::args().skip(1) {
+        if arg == "-l" {
+            long = true;
+        } else {
+            paths.push(arg);
+        }
+    }
+    (long, paths)
+}
+
 fn main() {
-    println!("Hello, world!");
+    let (long, mut paths) = parse_args();
+    if paths.is_empty() {
+        paths.push(".".to_string());
+    }
+    for p in paths {
+        print_listing(&p, long);
+    }
 }
