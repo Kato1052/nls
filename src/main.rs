@@ -1,3 +1,6 @@
+// 簡易 'ls' ユーティリティ。
+// -l オプションで長形式表示（所有者・グループ・サイズ・最終更新時刻など）。
+// 隠しファイル（先頭が '.'）はデフォルトで除外される。
 use std::env;
 use std::fs;
 use std::io;
@@ -7,10 +10,12 @@ use std::os::unix::fs::MetadataExt;
 use chrono::{Local, TimeZone, Datelike, Timelike};
 use users::{get_group_by_gid, get_user_by_uid};
 
+// ファイル名が '.' で始まるか判定（隠しファイル）
 fn is_hidden(entry_name: &str) -> bool {
     entry_name.starts_with('.')
 }
 
+// モードとファイル種別からパーミッション文字列（例: drwxr-xr-x）を作成する
 fn file_mode_string(mode: u32, is_dir: bool, is_symlink: bool) -> String {
     let ftype = if is_symlink {
         'l'
@@ -33,6 +38,8 @@ fn file_mode_string(mode: u32, is_dir: bool, is_symlink: bool) -> String {
     s
 }
 
+// パスのメタ情報を取得して長形式表示用の文字列を生成する。
+// - ファイル種別・モード、リンク数、所有者・グループ名、サイズ、更新時刻を整形する
 fn long_info(path: &Path, name: &str) -> String {
     match fs::symlink_metadata(path) {
         Ok(meta) => {
@@ -60,6 +67,7 @@ fn long_info(path: &Path, name: &str) -> String {
     }
 }
 
+// ディレクトリ内のファイル名を収集し、隠しファイルを除外してソートして返す
 fn list_names(path: &Path) -> io::Result<Vec<String>> {
     let mut names = Vec::new();
     for entry in fs::read_dir(path)? {
@@ -74,6 +82,7 @@ fn list_names(path: &Path) -> io::Result<Vec<String>> {
     Ok(names)
 }
 
+// パスを表示する。ディレクトリなら一覧を、ファイルならそのエントリを表示する
 fn print_listing(path_str: &str, long: bool) {
     let path = Path::new(path_str);
     if path.is_dir() {
@@ -101,6 +110,7 @@ fn print_listing(path_str: &str, long: bool) {
     }
 }
 
+// コマンドライン引数を解析する。-l を検出すると long=true、残りは表示対象パスとして収集する
 fn parse_args() -> (bool, Vec<String>) {
     let mut long = false;
     let mut paths = Vec::new();
@@ -114,6 +124,7 @@ fn parse_args() -> (bool, Vec<String>) {
     (long, paths)
 }
 
+// エントリポイント。引数が無ければカレントディレクトリを表示する
 fn main() {
     let (long, mut paths) = parse_args();
     if paths.is_empty() {
