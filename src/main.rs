@@ -1,3 +1,8 @@
+//! 簡易 'ls' ユーティリティ。
+//!
+//! - `-l` オプションで長形式表示（所有者・グループ・サイズ・最終更新時刻など）を行います。
+//! - 隠しファイル（先頭が '.'）はデフォルトで除外されます。
+
 use std::env;
 use std::fs;
 use std::io;
@@ -7,10 +12,18 @@ use std::os::unix::fs::MetadataExt;
 use chrono::{Local, TimeZone, Datelike, Timelike};
 use users::{get_group_by_gid, get_user_by_uid};
 
+/// ファイル名が '.' で始まるか判定します。隠しファイルであれば true を返します。
 fn is_hidden(entry_name: &str) -> bool {
     entry_name.starts_with('.')
 }
 
+/// モードとファイル種別からパーミッション文字列（例: `drwxr-xr-x`）を作成します。
+///
+/// - `mode`: POSIX のモードビット
+/// - `is_dir`: ディレクトリなら true
+/// - `is_symlink`: シンボリックリンクなら true
+///
+/// 戻り値はパーミッション表記の文字列です。
 fn file_mode_string(mode: u32, is_dir: bool, is_symlink: bool) -> String {
     let ftype = if is_symlink {
         'l'
@@ -33,6 +46,13 @@ fn file_mode_string(mode: u32, is_dir: bool, is_symlink: bool) -> String {
     s
 }
 
+/// パスのメタ情報を取得して、長形式表示用の文字列を生成します。
+///
+/// 表示にはファイル種別・モード、リンク数、所有者・グループ名、サイズ、更新時刻を含めます。
+/// - `path`: 対象のパス
+/// - `name`: 表示用のファイル名
+///
+/// エラー時はエラーメッセージ文字列を返します。
 fn long_info(path: &Path, name: &str) -> String {
     match fs::symlink_metadata(path) {
         Ok(meta) => {
@@ -60,6 +80,9 @@ fn long_info(path: &Path, name: &str) -> String {
     }
 }
 
+/// ディレクトリ内のファイル名を収集し、隠しファイルを除外してソートして返します。
+///
+/// 成功時はファイル名の Vec を、失敗時は io::Error を返します。
 fn list_names(path: &Path) -> io::Result<Vec<String>> {
     let mut names = Vec::new();
     for entry in fs::read_dir(path)? {
@@ -74,6 +97,9 @@ fn list_names(path: &Path) -> io::Result<Vec<String>> {
     Ok(names)
 }
 
+/// パスを表示します。ディレクトリなら一覧を、ファイルならそのエントリを表示します。
+///
+/// `long` が true の場合は長形式で出力します。
 fn print_listing(path_str: &str, long: bool) {
     let path = Path::new(path_str);
     if path.is_dir() {
@@ -101,6 +127,9 @@ fn print_listing(path_str: &str, long: bool) {
     }
 }
 
+/// コマンドライン引数を解析します。
+///
+/// `-l` を検出すると `long = true` に設定し、その他の引数は表示対象のパスとして返します。
 fn parse_args() -> (bool, Vec<String>) {
     let mut long = false;
     let mut paths = Vec::new();
@@ -114,6 +143,7 @@ fn parse_args() -> (bool, Vec<String>) {
     (long, paths)
 }
 
+/// エントリポイントです。引数が無ければカレントディレクトリを表示します。
 fn main() {
     let (long, mut paths) = parse_args();
     if paths.is_empty() {
@@ -121,5 +151,42 @@ fn main() {
     }
     for p in paths {
         print_listing(&p, long);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::tempdir;
+    use std::fs::File;
+
+    #[test]
+    fn test_is_hidden() {
+        assert!(is_hidden(".gitignore"));
+        assert!(!is_hidden("README.md"));
+    }
+
+    #[test]
+    fn test_file_mode_string_regular_dir_symlink() {
+        // regular file, mode 0o755
+        let mode = 0o755;
+        assert_eq!(file_mode_string(mode, false, false), "-rwxr-xr-x");
+        // directory
+        assert_eq!(file_mode_string(mode, true, false), "drwxr-xr-x");
+        // symlink (symlink takes precedence)
+        assert_eq!(file_mode_string(mode, true, true), "lrwxr-xr-x");
+    }
+
+    #[test]
+    fn test_list_names_excludes_hidden_and_sorts() {
+        let dir = tempdir().unwrap();
+        let p = dir.path();
+        File::create(p.join("b.txt")).unwrap();
+        File::create(p.join(".secret")).unwrap();
+        File::create(p.join("a.txt")).unwrap();
+
+        let names = list_names(p).unwrap();
+        // list_names sorts the results
+        assert_eq!(names, vec!["a.txt".to_string(), "b.txt".to_string()]);
     }
 }
