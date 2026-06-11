@@ -158,7 +158,8 @@ fn main() {
 mod tests {
     use super::*;
     use tempfile::tempdir;
-    use std::fs::File;
+    use std::fs::{File, write};
+    use std::os::unix::fs::symlink;
 
     #[test]
     fn test_is_hidden() {
@@ -178,6 +179,12 @@ mod tests {
     }
 
     #[test]
+    fn test_file_mode_string_zero_mode() {
+        // zero mode should yield all dashes with leading file-type '-'
+        assert_eq!(file_mode_string(0, false, false), "----------");
+    }
+
+    #[test]
     fn test_list_names_excludes_hidden_and_sorts() {
         let dir = tempdir().unwrap();
         let p = dir.path();
@@ -188,5 +195,32 @@ mod tests {
         let names = list_names(p).unwrap();
         // list_names sorts the results
         assert_eq!(names, vec!["a.txt".to_string(), "b.txt".to_string()]);
+    }
+
+    #[test]
+    fn test_long_info_contains_name_and_size() {
+        let dir = tempdir().unwrap();
+        let p = dir.path();
+        let file_path = p.join("foo.txt");
+        write(&file_path, b"hello").unwrap();
+
+        let out = long_info(&file_path, "foo.txt");
+        assert!(out.contains("foo.txt"));
+        // サイズ 5 バイトを含むこと
+        assert!(out.contains('5'));
+    }
+
+    #[test]
+    fn test_long_info_symlink_prefix_l() {
+        let dir = tempdir().unwrap();
+        let p = dir.path();
+        let target = p.join("target.txt");
+        write(&target, b"x").unwrap();
+        let link = p.join("link.txt");
+        symlink(&target, &link).unwrap();
+
+        let out = long_info(&link, "link.txt");
+        // symlink の場合は先頭が 'l' になる
+        assert!(out.starts_with('l'));
     }
 }
