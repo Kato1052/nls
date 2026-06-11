@@ -1,11 +1,10 @@
 use std::env;
-use std::fs::{self, DirEntry};
+use std::fs;
 use std::io;
 use std::path::Path;
 use std::os::unix::fs::MetadataExt;
-use std::os::unix::fs::PermissionsExt;
 
-use chrono::Local;
+use chrono::{Local, TimeZone, Datelike, Timelike};
 use users::{get_group_by_gid, get_user_by_uid};
 
 fn is_hidden(entry_name: &str) -> bool {
@@ -48,7 +47,7 @@ fn long_info(path: &Path, name: &str) -> String {
             let group = get_group_by_gid(gid).map(|g| g.name().to_string_lossy().into_owned()).unwrap_or_else(|| gid.to_string());
             let size = meta.size();
             let mtime = meta.mtime();
-            let dt = Local.timestamp_opt(mtime as i64, 0).unwrap();
+            let dt = Local.timestamp_opt(mtime, 0).unwrap();
             let now = Local::now();
             let time_str = if dt.year() < now.year() {
                 format!("{} {} ({})", dt.month(), dt.day(), dt.year())
