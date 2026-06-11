@@ -1,6 +1,8 @@
-// 簡易 'ls' ユーティリティ。
-// -l オプションで長形式表示（所有者・グループ・サイズ・最終更新時刻など）。
-// 隠しファイル（先頭が '.'）はデフォルトで除外される。
+//! 簡易 'ls' ユーティリティ。
+//!
+//! - `-l` オプションで長形式表示（所有者・グループ・サイズ・最終更新時刻など）を行います。
+//! - 隠しファイル（先頭が '.'）はデフォルトで除外されます。
+
 use std::env;
 use std::fs;
 use std::io;
@@ -10,12 +12,18 @@ use std::os::unix::fs::MetadataExt;
 use chrono::{Local, TimeZone, Datelike, Timelike};
 use users::{get_group_by_gid, get_user_by_uid};
 
-// ファイル名が '.' で始まるか判定（隠しファイル）
+/// ファイル名が '.' で始まるか判定します。隠しファイルであれば true を返します。
 fn is_hidden(entry_name: &str) -> bool {
     entry_name.starts_with('.')
 }
 
-// モードとファイル種別からパーミッション文字列（例: drwxr-xr-x）を作成する
+/// モードとファイル種別からパーミッション文字列（例: `drwxr-xr-x`）を作成します。
+///
+/// - `mode`: POSIX のモードビット
+/// - `is_dir`: ディレクトリなら true
+/// - `is_symlink`: シンボリックリンクなら true
+///
+/// 戻り値はパーミッション表記の文字列です。
 fn file_mode_string(mode: u32, is_dir: bool, is_symlink: bool) -> String {
     let ftype = if is_symlink {
         'l'
@@ -38,8 +46,13 @@ fn file_mode_string(mode: u32, is_dir: bool, is_symlink: bool) -> String {
     s
 }
 
-// パスのメタ情報を取得して長形式表示用の文字列を生成する。
-// - ファイル種別・モード、リンク数、所有者・グループ名、サイズ、更新時刻を整形する
+/// パスのメタ情報を取得して、長形式表示用の文字列を生成します。
+///
+/// 表示にはファイル種別・モード、リンク数、所有者・グループ名、サイズ、更新時刻を含めます。
+/// - `path`: 対象のパス
+/// - `name`: 表示用のファイル名
+///
+/// エラー時はエラーメッセージ文字列を返します。
 fn long_info(path: &Path, name: &str) -> String {
     match fs::symlink_metadata(path) {
         Ok(meta) => {
@@ -67,7 +80,9 @@ fn long_info(path: &Path, name: &str) -> String {
     }
 }
 
-// ディレクトリ内のファイル名を収集し、隠しファイルを除外してソートして返す
+/// ディレクトリ内のファイル名を収集し、隠しファイルを除外してソートして返します。
+///
+/// 成功時はファイル名の Vec を、失敗時は io::Error を返します。
 fn list_names(path: &Path) -> io::Result<Vec<String>> {
     let mut names = Vec::new();
     for entry in fs::read_dir(path)? {
@@ -82,7 +97,9 @@ fn list_names(path: &Path) -> io::Result<Vec<String>> {
     Ok(names)
 }
 
-// パスを表示する。ディレクトリなら一覧を、ファイルならそのエントリを表示する
+/// パスを表示します。ディレクトリなら一覧を、ファイルならそのエントリを表示します。
+///
+/// `long` が true の場合は長形式で出力します。
 fn print_listing(path_str: &str, long: bool) {
     let path = Path::new(path_str);
     if path.is_dir() {
@@ -110,7 +127,9 @@ fn print_listing(path_str: &str, long: bool) {
     }
 }
 
-// コマンドライン引数を解析する。-l を検出すると long=true、残りは表示対象パスとして収集する
+/// コマンドライン引数を解析します。
+///
+/// `-l` を検出すると `long = true` に設定し、その他の引数は表示対象のパスとして返します。
 fn parse_args() -> (bool, Vec<String>) {
     let mut long = false;
     let mut paths = Vec::new();
@@ -124,7 +143,7 @@ fn parse_args() -> (bool, Vec<String>) {
     (long, paths)
 }
 
-// エントリポイント。引数が無ければカレントディレクトリを表示する
+/// エントリポイントです。引数が無ければカレントディレクトリを表示します。
 fn main() {
     let (long, mut paths) = parse_args();
     if paths.is_empty() {
