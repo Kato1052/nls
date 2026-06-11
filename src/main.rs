@@ -1,11 +1,10 @@
 use std::env;
-use std::fs::{self, DirEntry};
+use std::fs;
 use std::io;
 use std::path::Path;
 use std::os::unix::fs::MetadataExt;
-use std::os::unix::fs::PermissionsExt;
 
-use chrono::Local;
+use chrono::{Local, TimeZone, Datelike, Timelike};
 use users::{get_group_by_gid, get_user_by_uid};
 
 fn is_hidden(entry_name: &str) -> bool {
