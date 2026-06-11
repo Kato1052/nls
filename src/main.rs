@@ -70,9 +70,9 @@ fn long_info(path: &Path, name: &str) -> String {
             let dt = Local.timestamp_opt(mtime, 0).unwrap();
             let now = Local::now();
             let time_str = if dt.year() < now.year() {
-                format!("{} {} ({})", dt.month(), dt.day(), dt.year())
+                format!("{}/{} ({})", dt.month(), dt.day(), dt.year())
             } else {
-                format!("{} {} {:02}:{:02}", dt.month(), dt.day(), dt.hour(), dt.minute())
+                format!("{}/{} {:02}:{:02}", dt.month(), dt.day(), dt.hour(), dt.minute())
             };
             format!("{} {:>2} {} {} {:>6} {} {}", mode_str, nlink, owner, group, size, time_str, name)
         }
