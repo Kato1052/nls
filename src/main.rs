@@ -134,3 +134,40 @@ fn main() {
         print_listing(&p, long);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::tempdir;
+    use std::fs::File;
+
+    #[test]
+    fn test_is_hidden() {
+        assert!(is_hidden(".gitignore"));
+        assert!(!is_hidden("README.md"));
+    }
+
+    #[test]
+    fn test_file_mode_string_regular_dir_symlink() {
+        // regular file, mode 0o755
+        let mode = 0o755;
+        assert_eq!(file_mode_string(mode, false, false), "-rwxr-xr-x");
+        // directory
+        assert_eq!(file_mode_string(mode, true, false), "drwxr-xr-x");
+        // symlink (symlink takes precedence)
+        assert_eq!(file_mode_string(mode, true, true), "lrwxr-xr-x");
+    }
+
+    #[test]
+    fn test_list_names_excludes_hidden_and_sorts() {
+        let dir = tempdir().unwrap();
+        let p = dir.path();
+        File::create(p.join("b.txt")).unwrap();
+        File::create(p.join(".secret")).unwrap();
+        File::create(p.join("a.txt")).unwrap();
+
+        let names = list_names(p).unwrap();
+        // list_names sorts the results
+        assert_eq!(names, vec!["a.txt".to_string(), "b.txt".to_string()]);
+    }
+}
