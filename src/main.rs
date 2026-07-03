@@ -116,15 +116,13 @@ fn print_listing(path_str: &str, long: bool) {
             match fs::read_dir(path) {
                 Ok(iter) => {
                     let mut entries: Vec<(String, std::path::PathBuf, usize, usize)> = Vec::new();
-                    for entry_res in iter {
-                        if let Ok(entry) = entry_res {
-                            if let Some(name) = entry.file_name().to_str() {
-                                if !is_hidden(name) {
-                                    let full = path.join(name);
-                                    let size_digits = fs::symlink_metadata(&full).ok().map(|m| m.size().to_string().len()).unwrap_or(0);
-                                    let nlink_digits = fs::symlink_metadata(&full).ok().map(|m| m.nlink().to_string().len()).unwrap_or(0);
-                                    entries.push((name.to_string(), full, size_digits, nlink_digits));
-                                }
+                    for entry in iter.flatten() {
+                        if let Some(name) = entry.file_name().to_str() {
+                            if !is_hidden(name) {
+                                let full = path.join(name);
+                                let size_digits = fs::symlink_metadata(&full).ok().map(|m| m.size().to_string().len()).unwrap_or(0);
+                                let nlink_digits = fs::symlink_metadata(&full).ok().map(|m| m.nlink().to_string().len()).unwrap_or(0);
+                                entries.push((name.to_string(), full, size_digits, nlink_digits));
                             }
                         }
                     }
