@@ -71,11 +71,16 @@ fn long_info(path: &Path, name: &str, size_width: usize, nlink_width: usize) -> 
             let mtime = meta.mtime();
             let dt = Local.timestamp_opt(mtime, 0).unwrap();
             let now = Local::now();
-            let time_str = if dt.year() < now.year() {
-                format!("{:>2}/{:>2} ({})", dt.month(), dt.day(), dt.year())
+            // 時刻表示欄を固定幅にすることで、年あり/なしでファイル名の位置がずれないようにする
+            // 年表示は "(YYYY)" で長さ6、時間表示は "HH:MM" を長さ6に揃えて右寄せすることで両者を同幅にする
+            let suffix = if dt.year() < now.year() {
+                format!("({})", dt.year()) // length 6
             } else {
-                format!("{:>2}/{:>2} {:02}:{:02}", dt.month(), dt.day(), dt.hour(), dt.minute())
+                format!("{:>6}", format!("{:02}:{:02}", dt.hour(), dt.minute())) // e.g. " 01:02"
             };
+            let time_raw = format!("{:>2}/{:>2} {}", dt.month(), dt.day(), suffix);
+            // 固定幅（12）で右寄せ
+            let time_str = format!("{:>12}", time_raw);
             let width = if size_width == 0 { 6 } else { size_width };
             let nlink_w = if nlink_width == 0 { 2 } else { nlink_width };
             format!("{} {:>nlink_w$} {} {} {:>width$} {} {}", mode_str, nlink, owner, group, size, time_str, name, width = width, nlink_w = nlink_w)
