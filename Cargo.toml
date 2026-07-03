@@ -1,6 +1,6 @@
 [package]
 name = "nls"
-version = "0.0.3-local"
+version = "0.0.4"
 edition = "2021"
 
 [dependencies]
