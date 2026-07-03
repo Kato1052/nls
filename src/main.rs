@@ -51,9 +51,11 @@ fn file_mode_string(mode: u32, is_dir: bool, is_symlink: bool) -> String {
 /// 表示にはファイル種別・モード、リンク数、所有者・グループ名、サイズ、更新時刻を含めます。
 /// - `path`: 対象のパス
 /// - `name`: 表示用のファイル名
+/// - `size_width`: サイズ表示の最小幅（0 の場合は既定幅 6 を使用）
+/// - `nlink_width`: リンク数表示の最小幅（0 の場合は既定幅 2 を使用）
 ///
 /// エラー時はエラーメッセージ文字列を返します。
-fn long_info(path: &Path, name: &str) -> String {
+fn long_info(path: &Path, name: &str, size_width: usize, nlink_width: usize) -> String {
     match fs::symlink_metadata(path) {
         Ok(meta) => {
             let mode = meta.mode();
@@ -70,11 +72,13 @@ fn long_info(path: &Path, name: &str) -> String {
             let dt = Local.timestamp_opt(mtime, 0).unwrap();
             let now = Local::now();
             let time_str = if dt.year() < now.year() {
-                format!("{}/{} ({})", dt.month(), dt.day(), dt.year())
+                format!("{:>2}/{:>2} ({})", dt.month(), dt.day(), dt.year())
             } else {
-                format!("{}/{} {:02}:{:02}", dt.month(), dt.day(), dt.hour(), dt.minute())
+                format!("{:>2}/{:>2} {:02}:{:02}", dt.month(), dt.day(), dt.hour(), dt.minute())
             };
-            format!("{} {:>2} {} {} {:>6} {} {}", mode_str, nlink, owner, group, size, time_str, name)
+            let width = if size_width == 0 { 6 } else { size_width };
+            let nlink_w = if nlink_width == 0 { 2 } else { nlink_width };
+            format!("{} {:>nlink_w$} {} {} {:>width$} {} {}", mode_str, nlink, owner, group, size, time_str, name, width = width, nlink_w = nlink_w)
         }
         Err(e) => format!("nls: cannot access '{}': {}", name, e),
     }
@@ -99,28 +103,53 @@ fn list_names(path: &Path) -> io::Result<Vec<String>> {
 
 /// パスを表示します。ディレクトリなら一覧を、ファイルならそのエントリを表示します。
 ///
-/// `long` が true の場合は長形式で出力します。
+/// `long` が true の場合は長形式で出力します。ディレクトリ表示の際は、全エントリのサイズ桁数を見て幅を揃えます。
 fn print_listing(path_str: &str, long: bool) {
     let path = Path::new(path_str);
     if path.is_dir() {
-        match list_names(path) {
-            Ok(names) => {
-                for name in names {
-                    let full = path.join(&name);
-                    if long {
-                        println!("{}", long_info(&full, &name));
-                    } else {
+        if long {
+            match fs::read_dir(path) {
+                Ok(iter) => {
+                    let mut entries: Vec<(String, std::path::PathBuf, usize, usize)> = Vec::new();
+                    for entry_res in iter {
+                        if let Ok(entry) = entry_res {
+                            if let Some(name) = entry.file_name().to_str() {
+                                if !is_hidden(name) {
+                                    let full = path.join(name);
+                                    let size_digits = fs::symlink_metadata(&full).ok().map(|m| m.size().to_string().len()).unwrap_or(0);
+                                    let nlink_digits = fs::symlink_metadata(&full).ok().map(|m| m.nlink().to_string().len()).unwrap_or(0);
+                                    entries.push((name.to_string(), full, size_digits, nlink_digits));
+                                }
+                            }
+                        }
+                    }
+                    // ソートして表示
+                    entries.sort_by(|a, b| a.0.cmp(&b.0));
+                    let max_size_width = entries.iter().map(|e| e.2).max().unwrap_or(6).max(6);
+                    let max_nlink_width = entries.iter().map(|e| e.3).max().unwrap_or(2).max(2);
+                    for (name, full, _, _) in entries {
+                        println!("{}", long_info(&full, &name, max_size_width, max_nlink_width));
+                    }
+                }
+                Err(e) => eprintln!("nls: cannot access '{}': {}", path_str, e),
+            }
+        } else {
+            match list_names(path) {
+                Ok(names) => {
+                    for name in names {
                         println!("{}", name);
                     }
                 }
+                Err(e) => eprintln!("nls: cannot access '{}': {}", path_str, e),
             }
-            Err(e) => eprintln!("nls: cannot access '{}': {}", path_str, e),
         }
     } else {
         // file or doesn't exist
         let base = Path::new(path_str).file_name().and_then(|s| s.to_str()).unwrap_or(path_str);
         if long {
-            println!("{}", long_info(path, base));
+            let size_width = fs::symlink_metadata(path).ok().map(|m| m.size().to_string().len()).unwrap_or(6);
+            let nlink_width = fs::symlink_metadata(path).ok().map(|m| m.nlink().to_string().len()).unwrap_or(2);
+            println!("{}", long_info(path, base, size_width, nlink_width));
         } else {
             println!("{}", base);
         }
@@ -204,7 +233,7 @@ mod tests {
         let file_path = p.join("foo.txt");
         write(&file_path, b"hello").unwrap();
 
-        let out = long_info(&file_path, "foo.txt");
+        let out = long_info(&file_path, "foo.txt", 0, 0);
         assert!(out.contains("foo.txt"));
         // サイズ 5 バイトを含むこと
         assert!(out.contains('5'));
@@ -219,7 +248,7 @@ mod tests {
         let link = p.join("link.txt");
         symlink(&target, &link).unwrap();
 
-        let out = long_info(&link, "link.txt");
+        let out = long_info(&link, "link.txt", 0, 0);
         // symlink の場合は先頭が 'l' になる
         assert!(out.starts_with('l'));
     }
