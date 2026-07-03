@@ -10,7 +10,7 @@ fn generate_impl(s: Shell, app: &mut Command, appname: &str, outdir: &Path, file
 }
 pub(super) fn generate(outdir: &Path) {
     use clap_complete::Shell::{Bash, Elvish, Fish, PowerShell, Zsh};
-    let appname = "lis";
+    let appname = "nls";
     let mut app = crate::Args::command();
     app.set_bin_name(appname);
     generate_impl(Bash, &mut app, appname, outdir, format!("bash/{appname}"));
