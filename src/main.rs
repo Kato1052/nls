@@ -71,11 +71,14 @@ fn long_info(path: &Path, name: &str, size_width: usize, nlink_width: usize) -> 
             let mtime = meta.mtime();
             let dt = Local.timestamp_opt(mtime, 0).unwrap();
             let now = Local::now();
-            let time_str = if dt.year() < now.year() {
+            // 時刻表示欄を固定幅にすることで、年あり/なしでファイル名の位置がずれないようにする
+            let time_raw = if dt.year() < now.year() {
                 format!("{:>2}/{:>2} ({})", dt.month(), dt.day(), dt.year())
             } else {
                 format!("{:>2}/{:>2} {:02}:{:02}", dt.month(), dt.day(), dt.hour(), dt.minute())
             };
+            // 固定幅（12）で右寄せ
+            let time_str = format!("{:>12}", time_raw);
             let width = if size_width == 0 { 6 } else { size_width };
             let nlink_w = if nlink_width == 0 { 2 } else { nlink_width };
             format!("{} {:>nlink_w$} {} {} {:>width$} {} {}", mode_str, nlink, owner, group, size, time_str, name, width = width, nlink_w = nlink_w)
