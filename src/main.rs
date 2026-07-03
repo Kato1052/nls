@@ -255,4 +255,30 @@ mod tests {
         // symlink の場合は先頭が 'l' になる
         assert!(out.starts_with('l'));
     }
+
+    #[test]
+    fn test_long_info_error_message() {
+        let p = Path::new("/nonexistent/this_file_should_not_exist_12345");
+        let out = long_info(p, "nope", 0, 0);
+        assert!(out.contains("nls: cannot access"));
+    }
+
+    #[test]
+    fn test_long_info_respects_widths() {
+        let dir = tempdir().unwrap();
+        let p = dir.path();
+        let small = p.join("s.txt");
+        write(&small, b"a").unwrap();
+        let big = p.join("b.txt");
+        write(&big, &vec![0u8; 1234]).unwrap();
+
+        // Request minimum widths: size 4, nlink 3
+        let out_small = long_info(&small, "s.txt", 4, 3);
+        let out_big = long_info(&big, "b.txt", 4, 3);
+
+        // big should report size 1234
+        assert!(out_big.contains("1234"));
+        // nlink should be padded to width 3 (e.g., "  1")
+        assert!(out_small.contains("  1"));
+    }
 }
