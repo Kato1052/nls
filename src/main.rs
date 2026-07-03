@@ -3,7 +3,6 @@
 //! - `-l` オプションで長形式表示（所有者・グループ・サイズ・最終更新時刻など）を行います。
 //! - 隠しファイル（先頭が '.'）はデフォルトで除外されます。
 
-use std::env;
 use std::fs;
 use std::io;
 use std::path::Path;
@@ -11,10 +10,27 @@ use std::os::unix::fs::MetadataExt;
 
 use chrono::{Local, TimeZone, Datelike, Timelike};
 use users::{get_group_by_gid, get_user_by_uid};
+use clap::Parser;
 
 /// ファイル名が '.' で始まるか判定します。隠しファイルであれば true を返します。
 fn is_hidden(entry_name: &str) -> bool {
     entry_name.starts_with('.')
+}
+
+#[derive(Parser)]
+#[command(name = "nls")]
+#[command(about = "簡易 'ls' ユーティリティ")]
+struct Args {
+    /// 長形式表示（所有者・グループ・サイズ・最終更新時刻など）
+    #[arg(short = 'l')]
+    long: bool,
+
+    /// コンプリーションファイルを生成
+    #[arg(long, help = "generate completion files", default_value_t = false)]
+    pub completions: bool,
+
+    /// 表示対象のパス（指定なしの場合はカレントディレクトリ）
+    paths: Vec<String>,
 }
 
 /// モードとファイル種別からパーミッション文字列（例: `drwxr-xr-x`）を作成します。
@@ -159,30 +175,16 @@ fn print_listing(path_str: &str, long: bool) {
     }
 }
 
-/// コマンドライン引数を解析します。
-///
-/// `-l` を検出すると `long = true` に設定し、その他の引数は表示対象のパスとして返します。
-fn parse_args() -> (bool, Vec<String>) {
-    let mut long = false;
-    let mut paths = Vec::new();
-    for arg in env::args().skip(1) {
-        if arg == "-l" {
-            long = true;
-        } else {
-            paths.push(arg);
-        }
-    }
-    (long, paths)
-}
 
 /// エントリポイントです。引数が無ければカレントディレクトリを表示します。
 fn main() {
-    let (long, mut paths) = parse_args();
+    let args = Args::parse();
+    let mut paths = args.paths;
     if paths.is_empty() {
         paths.push(".".to_string());
     }
     for p in paths {
-        print_listing(&p, long);
+        print_listing(&p, args.long);
     }
 }
 
