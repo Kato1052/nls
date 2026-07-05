@@ -147,7 +147,9 @@ fn print_listing(path_str: &str, long: bool) {
                     let max_size_width = entries.iter().map(|e| e.2).max().unwrap_or(6).max(6);
                     let max_nlink_width = entries.iter().map(|e| e.3).max().unwrap_or(2).max(2);
                     for (name, full, _, _) in entries {
-                        println!("{}", long_info(&full, &name, max_size_width, max_nlink_width));
+                        let is_dir = fs::symlink_metadata(&full).ok().map(|m| m.file_type().is_dir()).unwrap_or(false);
+                        let display_name = if is_dir { format!("{}/", name) } else { name.clone() };
+                        println!("{}", long_info(&full, &display_name, max_size_width, max_nlink_width));
                     }
                 }
                 Err(e) => eprintln!("nls: cannot access '{}': {}", path_str, e),
@@ -156,7 +158,12 @@ fn print_listing(path_str: &str, long: bool) {
             match list_names(path) {
                 Ok(names) => {
                     for name in names {
-                        println!("{}", name);
+                        let full = path.join(&name);
+                        if fs::symlink_metadata(&full).ok().map(|m| m.file_type().is_dir()).unwrap_or(false) {
+                            println!("{}/", name);
+                        } else {
+                            println!("{}", name);
+                        }
                     }
                 }
                 Err(e) => eprintln!("nls: cannot access '{}': {}", path_str, e),
