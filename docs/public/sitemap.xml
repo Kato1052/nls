@@ -2,10 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>http://localhost:1313/nls/about/</loc>
-    <lastmod>2026-07-05T11:05:15+09:00</lastmod>
+    <loc>http://localhost:1313/nls/example/</loc>
+    <lastmod>2026-07-05T12:17:33+09:00</lastmod>
   </url><url>
     <loc>http://localhost:1313/nls/</loc>
+    <lastmod>2026-07-05T12:17:33+09:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/nls/about/</loc>
     <lastmod>2026-07-05T11:05:15+09:00</lastmod>
   </url><url>
     <loc>http://localhost:1313/nls/categories/</loc>

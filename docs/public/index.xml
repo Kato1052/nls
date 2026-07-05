@@ -11,15 +11,49 @@
     </image>
     <generator>Hugo</generator>
     <language>en-us</language>
-    <lastBuildDate>Sun, 05 Jul 2026 11:05:15 +0900</lastBuildDate>
+    <lastBuildDate>Sun, 05 Jul 2026 12:17:33 +0900</lastBuildDate>
     <atom:link href="http://localhost:1313/nls/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>about</title>
+      <title>Example</title>
+      <link>http://localhost:1313/nls/example/</link>
+      <pubDate>Sun, 05 Jul 2026 12:17:33 +0900</pubDate>
+      <guid>http://localhost:1313/nls/example/</guid>
+      <description>&lt;h2 id=&#34;nlsの表示&#34;&gt;nlsの表示&lt;/h2&gt;
+&lt;p&gt;ファイルの変更時刻が分かりやすい&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;% nls -l
+-rw-r--r--  1 km staff  21643  7/ 4  11:29 Cargo.lock
+-rw-r--r--  1 km staff    213  7/ 4  11:29 Cargo.toml
+-rw-r--r--  1 km staff    912  7/ 4  11:29 Dockerfile
+-rw-r--r--  1 km staff   1124  7/ 4  11:29 Justfile
+-rw-r--r--  1 km staff   1065  7/ 4  11:29 LICENSE
+-rw-r--r--  1 km staff   1444  7/ 5  12:13 README.md
+drwxr-xr-x 15 km staff    480  7/ 4  11:29 docs
+drwxr-xr-x  4 km staff    128  7/ 4  11:29 src
+drwxr-xr-x  6 km staff    192  7/ 3  21:16 target
+&lt;/code&gt;&lt;/pre&gt;&lt;h2 id=&#34;システムが日本語の場合のls&#34;&gt;システムが日本語の場合のls&lt;/h2&gt;
+&lt;p&gt;月には月が付いているのに、日付は数字のみで美しくないし、何を表している数字なのか分かりにくい&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>About</title>
       <link>http://localhost:1313/nls/about/</link>
       <pubDate>Sun, 05 Jul 2026 11:05:15 +0900</pubDate>
       <guid>http://localhost:1313/nls/about/</guid>
-      <description>&lt;h1 id=&#34;test&#34;&gt;test&lt;/h1&gt;
-&lt;p&gt;test&lt;/p&gt;</description>
+      <description>&lt;h2 id=&#34;nlsの概要&#34;&gt;nlsの概要&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;ls -l&lt;/code&gt; 実行時に表示されるファイルの変更日時を、日本の表記に変更したコマンド。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;ls -l&lt;/code&gt; の実行結果にはファイルの変更日時が表示されるが、見づらい
+&lt;ul&gt;
+&lt;li&gt;英語の場合は、月の略称が表示される&lt;/li&gt;
+&lt;li&gt;日本語の場合は、月はk月、日にちは数字のみ&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;nls&lt;/code&gt; は &lt;code&gt;-l&lt;/code&gt; を使用した場合に、変更日時を &lt;code&gt;MM/dd mm:ss&lt;/code&gt; で表示する。
+&lt;ul&gt;
+&lt;li&gt;月は数字で表示する&lt;/li&gt;
+&lt;li&gt;変更日時が実行時刻の前年度以前である場合、 &lt;code&gt;MM/dd (YYYY)&lt;/code&gt; で表示する。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;</description>
     </item>
   </channel>
 </rss>
