@@ -8,15 +8,16 @@ title: 'Example'
 ファイルの変更時刻が分かりやすい
 ```
 % nls -l
+-rw-r--r--  1 km staff      0  1/ 1 (1970) an_old_file
 -rw-r--r--  1 km staff  21643  7/ 4  11:29 Cargo.lock
 -rw-r--r--  1 km staff    213  7/ 4  11:29 Cargo.toml
 -rw-r--r--  1 km staff    912  7/ 4  11:29 Dockerfile
+drwxr-xr-x 15 km staff    480  7/ 4  11:29 docs/
 -rw-r--r--  1 km staff   1124  7/ 4  11:29 Justfile
 -rw-r--r--  1 km staff   1065  7/ 4  11:29 LICENSE
 -rw-r--r--  1 km staff   1444  7/ 5  12:13 README.md
-drwxr-xr-x 15 km staff    480  7/ 4  11:29 docs
-drwxr-xr-x  4 km staff    128  7/ 4  11:29 src
-drwxr-xr-x  6 km staff    192  7/ 3  21:16 target
+drwxr-xr-x  4 km staff    128  7/ 4  11:29 src/
+drwxr-xr-x  6 km staff    192  7/ 3  21:16 target/
 ```
 
 ## システムが日本語の場合のls
@@ -24,6 +25,7 @@ drwxr-xr-x  6 km staff    192  7/ 3  21:16 target
 ```
 % ls -l
 total 88
+-rw-r--r--@  1 km  staff      0  1月  1  1970 an_old_file
 -rw-r--r--@  1 km  staff  21643  7月  4 11:29 Cargo.lock
 -rw-r--r--@  1 km  staff    213  7月  4 11:29 Cargo.toml
 -rw-r--r--@  1 km  staff    912  7月  4 11:29 Dockerfile
@@ -40,14 +42,15 @@ drwxr-xr-x@  6 km  staff    192  7月  3 21:16 target
 ```
 ls -l
 total 52
--rw-rw-r-- 1 km km 21643 Jul  5 12:25 Cargo.lock
--rw-rw-r-- 1 km km   213 Jul  5 12:25 Cargo.toml
--rw-rw-r-- 1 km km   912 Jul  5 12:25 Dockerfile
-drwxrwxr-x 6 km km  4096 Jul  5 12:25 docs
--rw-rw-r-- 1 km km  1124 Jul  5 12:25 Justfile
--rw-rw-r-- 1 km km  1065 Jul  5 12:25 LICENSE
--rw-rw-r-- 1 km km  1444 Jul  5 12:25 README.md
-drwxrwxr-x 2 km km  4096 Jul  5 12:25 src
+-rw-rw-r-- 1 km km     0 Jan  1  1970 an_old_file
+-rw-rw-r-- 1 km km 21643 Jul  5 12:37 Cargo.lock
+-rw-rw-r-- 1 km km   213 Jul  5 12:37 Cargo.toml
+-rw-rw-r-- 1 km km   912 Jul  5 12:37 Dockerfile
+drwxrwxr-x 6 km km  4096 Jul  5 12:37 docs/
+-rw-rw-r-- 1 km km  1124 Jul  5 12:37 Justfile
+-rw-rw-r-- 1 km km  1065 Jul  5 12:37 LICENSE
+-rw-rw-r-- 1 km km  1444 Jul  5 12:37 README.md
+drwxrwxr-x 2 km km  4096 Jul  5 12:37 src/
 ```
 
 ## lsのオプションでフォーマットを指定した場合

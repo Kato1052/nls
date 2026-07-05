@@ -21,15 +21,16 @@
       <description>&lt;h2 id=&#34;nlsの表示&#34;&gt;nlsの表示&lt;/h2&gt;
 &lt;p&gt;ファイルの変更時刻が分かりやすい&lt;/p&gt;
 &lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;% nls -l
+-rw-r--r--  1 km staff      0  1/ 1 (1970) an_old_file
 -rw-r--r--  1 km staff  21643  7/ 4  11:29 Cargo.lock
 -rw-r--r--  1 km staff    213  7/ 4  11:29 Cargo.toml
 -rw-r--r--  1 km staff    912  7/ 4  11:29 Dockerfile
+drwxr-xr-x 15 km staff    480  7/ 4  11:29 docs/
 -rw-r--r--  1 km staff   1124  7/ 4  11:29 Justfile
 -rw-r--r--  1 km staff   1065  7/ 4  11:29 LICENSE
 -rw-r--r--  1 km staff   1444  7/ 5  12:13 README.md
-drwxr-xr-x 15 km staff    480  7/ 4  11:29 docs
-drwxr-xr-x  4 km staff    128  7/ 4  11:29 src
-drwxr-xr-x  6 km staff    192  7/ 3  21:16 target
+drwxr-xr-x  4 km staff    128  7/ 4  11:29 src/
+drwxr-xr-x  6 km staff    192  7/ 3  21:16 target/
 &lt;/code&gt;&lt;/pre&gt;&lt;h2 id=&#34;システムが日本語の場合のls&#34;&gt;システムが日本語の場合のls&lt;/h2&gt;
 &lt;p&gt;月には月が付いているのに、日付は数字のみで美しくないし、何を表している数字なのか分かりにくい&lt;/p&gt;</description>
     </item>
