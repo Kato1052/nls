@@ -118,7 +118,7 @@ fn list_names(path: &Path) -> io::Result<Vec<String>> {
             }
         }
     }
-    names.sort_by(|a, b| a.to_lowercase().cmp(&b.to_lowercase()));
+    names.sort_by_key(|a| a.to_lowercase());
     Ok(names)
 }
 
@@ -143,7 +143,7 @@ fn print_listing(path_str: &str, long: bool) {
                         }
                     }
                     // ソートして表示
-                    entries.sort_by(|a, b| a.0.to_lowercase().cmp(&b.0.to_lowercase()));
+                    entries.sort_by_key(|a| a.0.to_lowercase());
                     let max_size_width = entries.iter().map(|e| e.2).max().unwrap_or(6).max(6);
                     let max_nlink_width = entries.iter().map(|e| e.3).max().unwrap_or(2).max(2);
                     for (name, full, _, _) in entries {
