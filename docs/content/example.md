@@ -1,6 +1,6 @@
 ---
 date: '2026-07-05T12:17:33+09:00'
-draft: true
+draft: false
 title: 'Example'
 ---
 

@@ -108,10 +108,10 @@ menu:
   main: # ヘッダーのタブ情報
     - identifier: about # Aboutページの追加(参照するmd名）
       name: About # Webで表示されるページ名
-      url: about/ # 対応するURL
+      url: /about/ # 対応するURL
       weight: 1 # タブ側の表示並びの優先順位
 
     - identifier: example # Aboutページの追加(参照するmd名）
       name: Example # Webで表示されるページ名
-      url: example/ # 対応するURL
-      weight: 1 # タブ側の表示並びの優先順位
+      url: /example/ # 対応するURL
+      weight: 2 # タブ側の表示並びの優先順位
