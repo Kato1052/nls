@@ -1,11 +1,25 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
-    <title>My New Hugo Project</title>
-    <link>http://localhost:1313/</link>
-    <description>Recent content on My New Hugo Project</description>
+    <title>nls</title>
+    <link>http://localhost:1313/nls/</link>
+    <description>Recent content on nls</description>
+    <image>
+      <title>nls</title>
+      <url>http://localhost:1313/nls/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</url>
+      <link>http://localhost:1313/nls/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</link>
+    </image>
     <generator>Hugo</generator>
     <language>en-us</language>
-    <atom:link href="http://localhost:1313/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sun, 05 Jul 2026 11:05:15 +0900</lastBuildDate>
+    <atom:link href="http://localhost:1313/nls/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>about</title>
+      <link>http://localhost:1313/nls/about/</link>
+      <pubDate>Sun, 05 Jul 2026 11:05:15 +0900</pubDate>
+      <guid>http://localhost:1313/nls/about/</guid>
+      <description>&lt;h1 id=&#34;test&#34;&gt;test&lt;/h1&gt;
+&lt;p&gt;test&lt;/p&gt;</description>
+    </item>
   </channel>
 </rss>
