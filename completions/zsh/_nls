@@ -1,0 +1,36 @@
+#compdef nls
+
+autoload -U is-at-least
+
+_nls() {
+    typeset -A opt_args
+    typeset -a _arguments_options
+    local ret=1
+
+    if is-at-least 5.2; then
+        _arguments_options=(-s -S -C)
+    else
+        _arguments_options=(-s -C)
+    fi
+
+    local context curcontext="$curcontext" state line
+    _arguments "${_arguments_options[@]}" : \
+'-l[長形式表示（所有者・グループ・サイズ・最終更新時刻など）]' \
+'--completions[generate completion files]' \
+'-h[Print help]' \
+'--help[Print help]' \
+'*::paths -- 表示対象のパス（指定なしの場合はカレントディレクトリ）:_default' \
+&& ret=0
+}
+
+(( $+functions[_nls_commands] )) ||
+_nls_commands() {
+    local commands; commands=()
+    _describe -t commands 'nls commands' commands "$@"
+}
+
+if [ "$funcstack[1]" = "_nls" ]; then
+    _nls "$@"
+else
+    compdef _nls nls
+fi

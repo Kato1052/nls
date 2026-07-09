@@ -1,4 +1,5 @@
 use clap::{Command, CommandFactory};
+use clap_complete::Shell;
 use std::path::Path;
 
 fn generate_impl(s: Shell, app: &mut Command, appname: &str, outdir: &Path, file: String) {

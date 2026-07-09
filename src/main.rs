@@ -12,6 +12,8 @@ use chrono::{Local, TimeZone, Datelike, Timelike};
 use users::{get_group_by_gid, get_user_by_uid};
 use clap::Parser;
 
+mod gencomp;
+
 /// ファイル名が '.' で始まるか判定します。隠しファイルであれば true を返します。
 fn is_hidden(entry_name: &str) -> bool {
     entry_name.starts_with('.')
@@ -186,6 +188,14 @@ fn print_listing(path_str: &str, long: bool) {
 /// エントリポイントです。引数が無ければカレントディレクトリを表示します。
 fn main() {
     let args = Args::parse();
+    
+    if args.completions {
+        let outdir = std::env::temp_dir().join("nls-completions");
+        gencomp::generate(&outdir);
+        println!("Completion files generated in: {}", outdir.display());
+        return;
+    }
+    
     let mut paths = args.paths;
     if paths.is_empty() {
         paths.push(".".to_string());
