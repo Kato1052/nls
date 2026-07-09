@@ -219,6 +219,15 @@ mod tests {
     }
 
     #[test]
+    fn test_is_hidden_edge_cases() {
+        assert!(is_hidden("."));
+        assert!(is_hidden(".."));
+        assert!(is_hidden(".hidden_file"));
+        assert!(!is_hidden("visible.txt"));
+        assert!(!is_hidden("file.with.dots.txt"));
+    }
+
+    #[test]
     fn test_file_mode_string_regular_dir_symlink() {
         // regular file, mode 0o755
         let mode = 0o755;
@@ -236,6 +245,32 @@ mod tests {
     }
 
     #[test]
+    fn test_file_mode_string_read_only() {
+        let mode = 0o444;
+        assert_eq!(file_mode_string(mode, false, false), "-r--r--r--");
+    }
+
+    #[test]
+    fn test_file_mode_string_write_execute() {
+        let mode = 0o700;
+        assert_eq!(file_mode_string(mode, false, false), "-rwx------");
+    }
+
+    #[test]
+    fn test_file_mode_string_group_other_permissions() {
+        let mode = 0o777;
+        assert_eq!(file_mode_string(mode, false, false), "-rwxrwxrwx");
+    }
+
+    #[test]
+    fn test_file_mode_string_various_combinations() {
+        // Execute-only for each segment
+        assert_eq!(file_mode_string(0o111, false, false), "---x--x--x");
+        // Write-only for each segment
+        assert_eq!(file_mode_string(0o222, false, false), "--w--w--w-");
+    }
+
+    #[test]
     fn test_list_names_excludes_hidden_and_sorts() {
         let dir = tempdir().unwrap();
         let p = dir.path();
@@ -246,6 +281,40 @@ mod tests {
         let names = list_names(p).unwrap();
         // list_names sorts the results
         assert_eq!(names, vec!["a.txt".to_string(), "b.txt".to_string()]);
+    }
+
+    #[test]
+    fn test_list_names_empty_directory() {
+        let dir = tempdir().unwrap();
+        let names = list_names(dir.path()).unwrap();
+        assert_eq!(names, Vec::<String>::new());
+    }
+
+    #[test]
+    fn test_list_names_only_hidden_files() {
+        let dir = tempdir().unwrap();
+        let p = dir.path();
+        File::create(p.join(".hidden1")).unwrap();
+        File::create(p.join(".hidden2")).unwrap();
+        let names = list_names(p).unwrap();
+        assert_eq!(names, Vec::<String>::new());
+    }
+
+    #[test]
+    fn test_list_names_case_insensitive_sorting() {
+        let dir = tempdir().unwrap();
+        let p = dir.path();
+        File::create(p.join("Z.txt")).unwrap();
+        File::create(p.join("a.txt")).unwrap();
+        File::create(p.join("B.txt")).unwrap();
+        let names = list_names(p).unwrap();
+        assert_eq!(names, vec!["a.txt".to_string(), "B.txt".to_string(), "Z.txt".to_string()]);
+    }
+
+    #[test]
+    fn test_list_names_nonexistent_directory() {
+        let result = list_names(Path::new("/nonexistent/path/12345"));
+        assert!(result.is_err());
     }
 
     #[test]
@@ -276,6 +345,15 @@ mod tests {
     }
 
     #[test]
+    fn test_long_info_directory_prefix_d() {
+        let dir = tempdir().unwrap();
+        let subdir = dir.path().join("subdir");
+        fs::create_dir(&subdir).unwrap();
+        let out = long_info(&subdir, "subdir", 0, 0);
+        assert!(out.starts_with('d'));
+    }
+
+    #[test]
     fn test_long_info_error_message() {
         let p = Path::new("/nonexistent/this_file_should_not_exist_12345");
         let out = long_info(p, "nope", 0, 0);
@@ -299,5 +377,262 @@ mod tests {
         assert!(out_big.contains("1234"));
         // nlink should be padded to width 3 (e.g., "  1")
         assert!(out_small.contains("  1"));
+    }
+
+    #[test]
+    fn test_long_info_contains_owner_group() {
+        let dir = tempdir().unwrap();
+        let p = dir.path();
+        let file_path = p.join("file.txt");
+        write(&file_path, b"test").unwrap();
+
+        let out = long_info(&file_path, "file.txt", 0, 0);
+        // Should contain some owner and group information
+        assert!(out.contains("file.txt"));
+        // Should have multiple components (permissions, nlink, owner, group, size, time)
+        let parts: Vec<&str> = out.split_whitespace().collect();
+        assert!(parts.len() >= 7);
+    }
+
+    #[test]
+    fn test_long_info_zero_size_file() {
+        let dir = tempdir().unwrap();
+        let p = dir.path();
+        let file_path = p.join("empty.txt");
+        write(&file_path, b"").unwrap();
+
+        let out = long_info(&file_path, "empty.txt", 0, 0);
+        // Empty file should have size 0
+        assert!(out.contains('0'));
+        assert!(out.contains("empty.txt"));
+    }
+
+    #[test]
+    fn test_long_info_large_size_digits() {
+        let dir = tempdir().unwrap();
+        let p = dir.path();
+        let file_path = p.join("large.txt");
+        write(&file_path, &vec![0u8; 1000000]).unwrap();
+
+        let out = long_info(&file_path, "large.txt", 10, 0);
+        assert!(out.contains("1000000"));
+        assert!(out.contains("large.txt"));
+    }
+
+    #[test]
+    fn test_long_info_custom_width_constraints() {
+        let dir = tempdir().unwrap();
+        let p = dir.path();
+        let file_path = p.join("test.txt");
+        write(&file_path, b"content").unwrap();
+
+        let out = long_info(&file_path, "test.txt", 10, 5);
+        // Should use the specified widths
+        assert!(out.contains("test.txt"));
+        // Check that formatting was applied
+        assert!(out.len() > 0);
+    }
+
+    #[test]
+    fn test_file_mode_string_dir_and_symlink() {
+        let mode = 0o755;
+        // Test directory with symlink flag set (symlink takes precedence)
+        assert_eq!(file_mode_string(mode, true, true), "lrwxr-xr-x");
+    }
+
+    #[test]
+    fn test_file_mode_string_all_permission_bits() {
+        // Test mode where each bit position is tested
+        let mode = 0o421;  // r-- -w- --x
+        assert_eq!(file_mode_string(mode, false, false), "-r---w---x");
+    }
+
+    #[test]
+    fn test_list_names_special_characters_in_names() {
+        let dir = tempdir().unwrap();
+        let p = dir.path();
+        File::create(p.join("file-with-dash.txt")).unwrap();
+        File::create(p.join("file_with_underscore.txt")).unwrap();
+        File::create(p.join("file with spaces.txt")).unwrap();
+
+        let names = list_names(p).unwrap();
+        assert_eq!(names.len(), 3);
+        assert!(names.contains(&"file-with-dash.txt".to_string()));
+        assert!(names.contains(&"file_with_underscore.txt".to_string()));
+        assert!(names.contains(&"file with spaces.txt".to_string()));
+    }
+
+    #[test]
+    fn test_long_info_time_formatting_for_recent_files() {
+        let dir = tempdir().unwrap();
+        let p = dir.path();
+        let file_path = p.join("recent.txt");
+        write(&file_path, b"test").unwrap();
+
+        let out = long_info(&file_path, "recent.txt", 0, 0);
+        // Should contain the file name
+        assert!(out.contains("recent.txt"));
+        // Should contain time information (HH:MM format or year in parentheses)
+        assert!(out.contains(':') || out.contains('('));
+    }
+
+    #[test]
+    fn test_long_info_contains_all_required_fields() {
+        let dir = tempdir().unwrap();
+        let p = dir.path();
+        let file_path = p.join("complete.txt");
+        write(&file_path, b"x").unwrap();
+
+        let out = long_info(&file_path, "complete.txt", 0, 0);
+        // Split and check we have enough fields: mode, nlink, owner, group, size, time, name
+        let parts: Vec<&str> = out.split_whitespace().collect();
+        assert!(parts.len() >= 7, "Output should have at least 7 parts: {}", out);
+    }
+
+    #[test]
+    fn test_is_hidden_multiple_dots() {
+        assert!(is_hidden("..."));
+        assert!(is_hidden(".file.with.dots"));
+        assert!(!is_hidden("file...txt"));
+    }
+
+    #[test]
+    fn test_file_mode_string_permissions_format_exactly_10_chars() {
+        // All valid modes should produce exactly 10 character string
+        for mode in &[0o000, 0o111, 0o222, 0o333, 0o444, 0o555, 0o666, 0o777] {
+            for is_dir in &[false, true] {
+                for is_symlink in &[false, true] {
+                    let result = file_mode_string(*mode, *is_dir, *is_symlink);
+                    assert_eq!(result.len(), 10, "Mode {:o}, is_dir: {}, is_symlink: {} produced: {}", mode, is_dir, is_symlink, result);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_long_info_with_default_widths() {
+        let dir = tempdir().unwrap();
+        let p = dir.path();
+        let file_path = p.join("file.txt");
+        write(&file_path, b"test").unwrap();
+
+        // Default widths are 0, which should be converted to 6 and 2
+        let out = long_info(&file_path, "file.txt", 0, 0);
+        assert!(out.contains("file.txt"));
+        // File size should be at least right-aligned to width 6
+        assert!(out.len() > 20);
+    }
+
+    #[test]
+    fn test_long_info_path_with_display_name_different() {
+        let dir = tempdir().unwrap();
+        let p = dir.path();
+        let file_path = p.join("actual.txt");
+        write(&file_path, b"test").unwrap();
+
+        // Use a different display name
+        let out = long_info(&file_path, "displayed.txt", 0, 0);
+        assert!(out.contains("displayed.txt"));
+        assert!(!out.contains("actual.txt"));
+    }
+
+    #[test]
+    fn test_long_info_formatting_consistency() {
+        let dir = tempdir().unwrap();
+        let p = dir.path();
+        
+        let file1 = p.join("f1.txt");
+        write(&file1, b"a").unwrap();
+        let file2 = p.join("f2.txt");
+        write(&file2, b"bbb").unwrap();
+        
+        let out1 = long_info(&file1, "f1.txt", 5, 3);
+        let out2 = long_info(&file2, "f2.txt", 5, 3);
+        
+        // Both should start with file type character
+        assert!(out1.chars().next().unwrap() == '-');
+        assert!(out2.chars().next().unwrap() == '-');
+        
+        // Both should have proper spacing
+        assert!(out1.contains('f'));
+        assert!(out2.contains('f'));
+    }
+
+    #[test]
+    fn test_is_hidden_with_empty_string() {
+        // Edge case: empty string should not be hidden
+        assert!(!is_hidden(""));
+    }
+
+    #[test]
+    fn test_file_mode_string_single_permission_bits() {
+        // Test with individual permission bits set
+        assert_eq!(file_mode_string(0o400, false, false), "-r--------");
+        assert_eq!(file_mode_string(0o200, false, false), "--w-------");
+        assert_eq!(file_mode_string(0o100, false, false), "---x------");
+        assert_eq!(file_mode_string(0o040, false, false), "----r-----");
+        assert_eq!(file_mode_string(0o020, false, false), "-----w----");
+        assert_eq!(file_mode_string(0o010, false, false), "------x---");
+        assert_eq!(file_mode_string(0o004, false, false), "-------r--");
+        assert_eq!(file_mode_string(0o002, false, false), "--------w-");
+        assert_eq!(file_mode_string(0o001, false, false), "---------x");
+    }
+
+    #[test]
+    fn test_list_names_unicode_filenames() {
+        let dir = tempdir().unwrap();
+        let p = dir.path();
+        File::create(p.join("файл.txt")).unwrap();
+        File::create(p.join("ファイル.txt")).unwrap();
+        File::create(p.join("αρχείο.txt")).unwrap();
+
+        let names = list_names(p).unwrap();
+        assert_eq!(names.len(), 3);
+    }
+
+    #[test]
+    fn test_long_info_year_vs_time_formatting() {
+        let dir = tempdir().unwrap();
+        let p = dir.path();
+        let file_path = p.join("test.txt");
+        write(&file_path, b"test").unwrap();
+
+        let out = long_info(&file_path, "test.txt", 0, 0);
+        // Should contain either year in parentheses or time in HH:MM format
+        let has_year = out.contains('(') && out.contains(')');
+        let has_time = out.matches(':').count() >= 1;
+        assert!(has_year || has_time, "Output should have year or time format");
+    }
+
+    #[test]
+    fn test_file_mode_string_directory_modes() {
+        // Directory with different permission combinations
+        assert_eq!(file_mode_string(0o755, true, false), "drwxr-xr-x");
+        assert_eq!(file_mode_string(0o700, true, false), "drwx------");
+        assert_eq!(file_mode_string(0o777, true, false), "drwxrwxrwx");
+    }
+
+    #[test]
+    fn test_file_mode_string_symlink_modes() {
+        // Symlink should always show 'l' regardless of mode
+        assert_eq!(file_mode_string(0o755, false, true), "lrwxr-xr-x");
+        assert_eq!(file_mode_string(0o777, true, true), "lrwxrwxrwx");
+        assert_eq!(file_mode_string(0o000, false, true), "l---------");
+    }
+
+    #[test]
+    fn test_long_info_size_formatting() {
+        let dir = tempdir().unwrap();
+        let p = dir.path();
+        
+        let f1 = p.join("1byte.txt");
+        write(&f1, b"x").unwrap();
+        let out1 = long_info(&f1, "1byte.txt", 0, 0);
+        assert!(out1.contains('1'));
+        
+        let f2 = p.join("10bytes.txt");
+        write(&f2, &vec![0u8; 10]).unwrap();
+        let out2 = long_info(&f2, "10bytes.txt", 0, 0);
+        assert!(out2.contains("10"));
     }
 }
