@@ -112,6 +112,7 @@ jobs:
           mkdir -p dist/$ASSET_NAME
           cp target/${{ matrix.target }}/release/${{ needs.setup.outputs.appname }}${{ matrix.ext }} dist/$ASSET_NAME/
           cp README.md LICENSE dist/$ASSET_NAME/
+          cp -R completions dist/$ASSET_NAME/
           tar cvfz dist/${ASSET_NAME}.tar.gz -C dist $ASSET_NAME
 
       - name: Upload assets
