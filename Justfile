@@ -21,7 +21,7 @@ container-local:
         --build-arg GIT_REVISION={{git_revision}} \
         --build-arg BUILD_DATE={{build_date}} \
         --build-arg VERSION={{app_version}} \
-        -t ghcr.io/Kato1052/nls:latest -t ghcr.io/Kato1052/nls:{{ app_version }} \
+        -t ghcr.io/kato1052/nls:latest -t ghcr.io/kato1052/nls:{{ app_version }} \
         -f Dockerfile \
         .
 
@@ -31,6 +31,6 @@ container:
         --build-arg GIT_REVISION={{git_revision}} \
         --build-arg BUILD_DATE={{build_date}} \
         --build-arg VERSION={{ app_version }} \
-        -t ghcr.io/Kato1052/nls:latest -t ghcr.io/Kato1052/nls:{{ app_version }} \
+        -t ghcr.io/kato1052/nls:latest -t ghcr.io/kato1052/nls:{{ app_version }} \
         -f Dockerfile \
         .
