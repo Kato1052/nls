@@ -25,6 +25,9 @@ DESCRIPTION
         Display extended file metadata, similar to "ls -l" command. However, it doesn't use the month abbreviation.
 ```
 ## Installation
+```
+brew install Kato1052/tap/nls
+```
 ## About
 ### Developer
 - Kato Mizuki
